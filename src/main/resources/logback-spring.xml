@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <!-- 控制台日志 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d %-4relative [%thread] %-5level %logger{35} - %msg %n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 文件日志，每天一个，最多30个 -->
+    <appender name="FileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>d:\test.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>d:\test.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d %-4relative [%thread] %-5level %logger{35} %class:%L - %msg %n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Log格式-用户操作-数据库日志 -->
+    <appender name="UserLogDBAppender" class="com.grm.logbacktest.logback.TopDBAppender">
+        <connectionSource class="ch.qos.logback.core.db.DataSourceConnectionSource">
+            <dataSource class="org.apache.tomcat.jdbc.pool.DataSource">
+                <driverClassName class="com.mysql.jdbc.Driver" />
+                <url>jdbc:mysql://localhost:3306/testlogback?characterEncoding=UTF-8</url>
+                <username>root</username>
+                <password>root</password>
+            </dataSource>
+        </connectionSource>
+
+        <insertsql>
+            INSERT INTO TB_USER_LOG(ID, ACCOUNT, USER_ID, USER_NAME, ORG_CODE, ORG_NAME, IP, DESCRIPTION, LEVEL)
+            VALUES(uuid(),?,?,?,?,?,?,?,?);
+        </insertsql>
+
+        <params>
+            %X{account},%X{userId},%X{userName},%X{orgCode},%X{orgName},%X{ip},%X{description},%X{level}
+        </params>
+        <dateformat>yyyy-MM-dd HH:mm:ss</dateformat>
+    </appender>
+
+    <!-- 根日志logger -->
+    <root level="INFO">
+        <!--输出日志到文件-->
+        <appender-ref ref="FileAppender"/>
+        <!--控制台输出日志-->
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <!-- 用户操作日志logger -->
+    <logger name="UserLogger" level="INFO" >
+        <appender-ref ref="UserLogDBAppender"/>
+    </logger>
+
+</configuration>
